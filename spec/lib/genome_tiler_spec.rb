@@ -22,7 +22,7 @@ describe GenomeTiler do
 
       it "yields a position-specific subsequence" do
         i = 0
-        seqs = ["AGGGTCACGTAATGCTGATCC", "GGGTCACGTAATGCTGATCCA", "GGTCACGTAATGCTGATCCAG", "GTCACGTAATGCTGATCCAGT", "TCACGTAATGCTGATCCAGTC"]
+        seqs = ["AGGGTCACGTAATGCTGATC", "GGGTCACGTAATGCTGATCC", "GGTCACGTAATGCTGATCCA", "GTCACGTAATGCTGATCCAG", "TCACGTAATGCTGATCCAGT"]
 
         instance = GenomeTiler.new
         instance.each_sequence_in_data(data, 20) do |definition, seq|
