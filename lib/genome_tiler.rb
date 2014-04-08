@@ -1,3 +1,4 @@
+require 'command'
 require 'stringio'
 require 'bio'
 
@@ -13,13 +14,24 @@ class GenomeTiler
     items
   end
 
+  def reverse_complement(path_to_input, path_to_reversed)
+    cmd = Command.run("module load fastx-toolkit; fastx_reverse_complement -i /path/to/some.fasta -o /path/to/reversed.fasta")
+    return cmd.success?
+  end
+
   def each_sequence_in_data(data, window_size)
     Bio::FlatFile.auto(data) do |ff|
       ff.each do |entry|
         definition = entry.definition
         sequence = entry.seq
+
         (0..sequence.length-window_size).each do |i|
-          yield generate_definition(definition, i, window_size), sequence[i..(i+window_size-1)]
+          begin
+            yield generate_definition(definition, i, window_size), sequence[i..(i+window_size-1)]
+          rescue => e
+            puts e
+            next
+          end
         end
       end
     end
@@ -27,6 +39,7 @@ class GenomeTiler
 
   def generate_definition(definition, position, window_size)
     fields = definition_to_fields(definition)
+    raise "Definition line #{definition} misses ID element [#{window_size}]" unless fields.has_key?("ID")
     ">#{fields["ID"].downcase}_#{position}_#{position+window_size}"
   end
 

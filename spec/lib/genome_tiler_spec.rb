@@ -7,14 +7,25 @@ describe GenomeTiler do
     @output = StringIO.new
   end
 
-  context "#split_into_windows" do
+  describe "#reverse_complement" do
+    it "takes a fasta file and uses a call to fastx-toolkit to reverse complement it" do
+      instance = GenomeTiler.new
+
+      expect(Command).to receive(:run) do
+        double(:cmd, success?:true)
+      end
+      expect(instance.reverse_complement("/path/to/some.fasta", "/path/to/reversed.fasta")).to eq true
+    end
+  end
+
+  describe "#split_into_windows" do
     it "takes a fasta file and splits its sequences into overlapping windows" do
       instance = GenomeTiler.new
       instance.split_into_windows(data, @output, 20, {})
       expect(@output.string.split("\n").count).to eq 62
     end
 
-    context "#each_sequence_in_data" do
+    describe "#each_sequence_in_data" do
       it "yields control for each possible split for a sequence" do
         instance = GenomeTiler.new
         expect { |b| instance.each_sequence_in_data(data, 20, &b) }.to yield_control.exactly(31).times

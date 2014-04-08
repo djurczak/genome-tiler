@@ -1,0 +1,5 @@
+source 'https://rubygems.org'
+gem 'bio'
+gem 'rspec'
+gem 'pry'
+gem 'command'
