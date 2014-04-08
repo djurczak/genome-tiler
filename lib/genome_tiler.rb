@@ -6,7 +6,7 @@ class GenomeTiler
   def split_into_windows(data, output, window_size, options)
     items = 0
 
-    each_sequence_in_data(data, window_size) do |definition, sequence|
+    each_window_in_data(data, window_size) do |definition, sequence|
       write_element_to_stream(output, definition, sequence)
       items += 1
     end
@@ -19,7 +19,7 @@ class GenomeTiler
     return cmd.success?
   end
 
-  def each_sequence_in_data(data, window_size)
+  def each_window_in_data(data, window_size)
     Bio::FlatFile.auto(data) do |ff|
       ff.each do |entry|
         definition = entry.definition

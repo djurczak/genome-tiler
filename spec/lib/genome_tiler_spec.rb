@@ -25,10 +25,10 @@ describe GenomeTiler do
       expect(@output.string.split("\n").count).to eq 62
     end
 
-    describe "#each_sequence_in_data" do
+    describe "#each_window_in_data" do
       it "yields control for each possible split for a sequence" do
         instance = GenomeTiler.new
-        expect { |b| instance.each_sequence_in_data(data, 20, &b) }.to yield_control.exactly(31).times
+        expect { |b| instance.each_window_in_data(data, 20, &b) }.to yield_control.exactly(31).times
       end
 
       it "yields a position-specific subsequence" do
@@ -36,7 +36,7 @@ describe GenomeTiler do
         seqs = ["AGGGTCACGTAATGCTGATC", "GGGTCACGTAATGCTGATCC", "GGTCACGTAATGCTGATCCA", "GTCACGTAATGCTGATCCAG", "TCACGTAATGCTGATCCAGT"]
 
         instance = GenomeTiler.new
-        instance.each_sequence_in_data(data, 20) do |definition, seq|
+        instance.each_window_in_data(data, 20) do |definition, seq|
           expect(seq).to eq seqs[i]
           i+=1
           break if i == 4
@@ -48,7 +48,7 @@ describe GenomeTiler do
         definitions = [">yhet_0_20", ">yhet_1_21", ">yhet_2_22", ">yhet_3_23", ">yhet_4_24"]
 
         instance = GenomeTiler.new
-        instance.each_sequence_in_data(data, 20) do |definition, seq|
+        instance.each_window_in_data(data, 20) do |definition, seq|
           expect(definition).to eq definitions[i]
           i+=1
           break if i == 4
