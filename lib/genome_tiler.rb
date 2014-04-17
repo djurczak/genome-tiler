@@ -14,9 +14,26 @@ class GenomeTiler
     items
   end
 
-  def reverse_complement(path_to_input, path_to_reversed)
-    cmd = Command.run("module load fastx-toolkit; fastx_reverse_complement -i /path/to/some.fasta -o /path/to/reversed.fasta")
-    return cmd.success?
+  def each_sequence(path_to_input)
+    Bio::FlatFile.auto(path_to_input) do |ff|
+      ff.each do |entry|
+        definition = entry.definition
+        sequence = entry.seq
+
+        yield definition, sequence
+      end
+    end
+  end
+
+  def reverse_complement(path_to_input, output_stream)
+    each_sequence(path_to_input) do |name, sequence|
+      s = reverse_complement_sequence(sequence)
+      output_stream.puts(">#{name}\n#{s}\n")
+    end
+  end
+
+  def reverse_complement_sequence(sequence)
+    Bio::Sequence::NA.new(sequence).reverse_complement
   end
 
   def each_window_in_data(data, window_size)

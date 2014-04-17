@@ -8,15 +8,43 @@ describe GenomeTiler do
   end
 
   describe "#reverse_complement" do
-    it "takes a fasta file and uses a call to fastx-toolkit to reverse complement it" do
-      instance = GenomeTiler.new
+    let(:data) { File.join(File.dirname(__FILE__), '..', 'fixtures', 'two_sequences.fasta') }
 
-      expect(Command).to receive(:run) do
-        double(:cmd, success?:true)
+    context "given a fasta file" do
+      it "converts all sequences and stores them in the output file" do
+        instance = GenomeTiler.new
+        instance.reverse_complement(data, @output)
+        expect(@output.string.split("\n").count).to eq 4
       end
-      expect(instance.reverse_complement("/path/to/some.fasta", "/path/to/reversed.fasta")).to eq true
+
+      it "correctly flips all sequences" do
+        instance = GenomeTiler.new
+
+        instance.reverse_complement(data, @output)
+
+        flipped = "ggaacatgaatgaaaataaaaacaagactggatcagcattacgtgaccct"
+        @output.string.split("\n").each_with_index do |line,i|
+          next if i.even?
+          expect(line).to eq flipped
+        end
+      end
+    end
+
+    describe "#each_sequence" do
+      it "yields control for every sequene in a fasta file" do
+        instance = GenomeTiler.new
+        expect { |b| instance.each_sequence(data, &b) }.to yield_control.exactly(2).times
+      end
+    end
+
+    describe "#reverse_complement_sequence" do
+      it "returns the reverse complement of a nucleotide sequence" do
+        instance = GenomeTiler.new
+        expect(instance.reverse_complement_sequence("AGCTTT").downcase).to eq "AAAGCT".downcase
+      end
     end
   end
+
 
   describe "#split_into_windows" do
     it "takes a fasta file and splits its sequences into overlapping windows" do
