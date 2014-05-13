@@ -85,6 +85,38 @@ describe GenomeTiler do
         end
       end
 
+      context "given the option :shifted == 10" do
+        it "yields a shifted position-specific subsequence" do
+          i = 0
+          seqs = [
+            "CACGTAATGCTGATCCAGTC", "ACGTAATGCTGATCCAGTCT",
+            "CGTAATGCTGATCCAGTCTT", "GTAATGCTGATCCAGTCTTG",
+            "TAATGCTGATCCAGTCTTGT"
+          ]
+
+          instance = GenomeTiler.new
+          instance.each_window_in_data(data, 20, {:shifted => 5}) do |definition, seq|
+            expect(seq).to eq seqs[i]
+            i+=1
+            break if i == 4
+          end
+        end
+
+        it "contains the correctly shifted chromosome and position in the definition line" do
+          i = 0
+          definitions = [
+            ">yhet_6_25", ">yhet_7_26", ">yhet_8_27", ">yhet_9_28", ">yhet_10_29"
+          ]
+
+          instance = GenomeTiler.new
+          instance.each_window_in_data(data, 20, {:shifted => 5}) do |definition, seq|
+            expect(definition).to eq definitions[i]
+            i+=1
+            break if i == 4
+          end
+        end
+      end
+
       describe "#generate_definition" do
         context "given a fasta definition line that contains an ID element" do
           it "generates a definiton string with the ID and start/end position" do
