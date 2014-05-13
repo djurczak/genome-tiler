@@ -57,7 +57,7 @@ class GenomeTiler
   def generate_definition(definition, position, window_size)
     fields = definition_to_fields(definition)
     raise "Definition line #{definition} misses ID element [#{window_size}]" unless fields.has_key?("ID")
-    ">#{fields["ID"].downcase}_#{position}_#{position+window_size}"
+    ">#{fields["ID"].downcase}_#{position + 1}_#{position+window_size}"
   end
 
   def definition_to_fields(definition)

@@ -73,7 +73,9 @@ describe GenomeTiler do
 
       it "contains the right chromosome and position in the definition line" do
         i = 0
-        definitions = [">yhet_0_20", ">yhet_1_21", ">yhet_2_22", ">yhet_3_23", ">yhet_4_24"]
+        definitions = [
+          ">yhet_1_20", ">yhet_2_21", ">yhet_3_22", ">yhet_4_23", ">yhet_5_24"
+        ]
 
         instance = GenomeTiler.new
         instance.each_window_in_data(data, 20) do |definition, seq|
@@ -87,7 +89,7 @@ describe GenomeTiler do
         context "given a fasta definition line that contains an ID element" do
           it "generates a definiton string with the ID and start/end position" do
             instance = GenomeTiler.new
-            expect(instance.generate_definition(">YHet type=chromosome_arm; loc=YHet:1..347038; ID=YHet;", 5, 20)).to eq ">yhet_5_25"
+            expect(instance.generate_definition(">YHet type=chromosome_arm; loc=YHet:1..347038; ID=YHet;", 5, 20)).to eq ">yhet_6_25"
           end
         end
 
@@ -114,16 +116,16 @@ describe GenomeTiler do
         instance = GenomeTiler.new
 
         output = StringIO.new
-        instance.write_element_to_stream(output, ">yhet_0_20", "AGAGAGAGAG")
+        instance.write_element_to_stream(output, ">yhet_1_20", "AGAGAGAGAG")
         output.close
-        expect(output.string.split("\n").first).to eq ">yhet_0_20"
+        expect(output.string.split("\n").first).to eq ">yhet_1_20"
       end
 
       it "writes the sequence of an transposon element to a stream" do
         instance = GenomeTiler.new
 
         output = StringIO.new
-        instance.write_element_to_stream(output, ">yhet_0_20", "AGAGAGAGAG")
+        instance.write_element_to_stream(output, ">yhet_1_20", "AGAGAGAGAG")
         output.close
 
         expect(output.string.split("\n").last).to eq "AGAGAGAGAG"
