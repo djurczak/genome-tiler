@@ -2,6 +2,10 @@ require 'command'
 require 'stringio'
 require 'bio'
 
+class GenomeTilerError < StandardError; end;
+class GenomeTilerFastaMissingIDError < GenomeTilerError; end;
+class GenomeTilerFastaMultipleAssignmentsError < GenomeTilerError; end;
+
 class GenomeTiler
   def split_into_windows(data, output, window_size, options)
     items = 0
@@ -52,12 +56,23 @@ class GenomeTiler
 
   def generate_definition(definition, position, window_size)
     fields = definition_to_fields(definition)
-    raise "Definition line #{definition} misses ID element [#{window_size}]" unless fields.has_key?("ID")
     ">#{fields["ID"].downcase}_#{position + 1}_#{position+window_size}"
   end
 
   def definition_to_fields(definition)
-    definition.split(";").map { |s| s.strip.split("=") }.reduce({}) { |o, n| o.merge!(n[0] => n[1]) }
+    columns = definition.split(";")
+    fields = columns.map { |s| s.strip.split("=") }
+
+    raise GenomeTilerFastaMultipleAssignmentsError,
+      "Definition line '#{definition}' has multiple assignments in a " \
+      "single column." unless fields.select { |f| f.count != 2 }.empty?
+
+    fields = fields.reduce({}) { |o, n| o.merge!(n[0] => n[1]) }
+
+    raise GenomeTilerFastaMissingIDError,
+      "Definition line '#{definition}' misses the ID element." unless fields.has_key?("ID")
+
+    fields
   end
 
   def write_element_to_stream(output, definition, sequence)
