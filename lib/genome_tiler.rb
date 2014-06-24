@@ -43,24 +43,29 @@ class GenomeTiler
   def each_window_in_data(data, window_size, options = {})
     Bio::FlatFile.auto(data) do |ff|
       ff.each do |entry|
-        definition = entry.definition
+        definition_fields = definition_to_fields(entry.definition)
+
         sequence = entry.seq
         start_pos = options.fetch(:shifted) { 0 }
 
         (start_pos..sequence.length-window_size).each do |i|
-          yield generate_definition(definition, i, window_size), sequence[i..(i+window_size-1)]
+          yield generate_definition(definition_fields, i, window_size), sequence[i..(i+window_size-1)]
         end
       end
     end
   end
 
-  def generate_definition(definition, position, window_size)
-    fields = definition_to_fields(definition)
+  def generate_definition(fields, position, window_size)
     ">#{fields["ID"].downcase}_#{position + 1}_#{position+window_size}"
   end
 
   def definition_to_fields(definition)
-    columns = definition.split(";")
+
+    ## first lets get rid of the '>chrom_name' prefix, it should be available
+    ## inside the ID column anyway
+    definition_string = definition.gsub(/>\w+/, "").strip
+
+    columns = definition_string.split(";")
     fields = columns.map { |s| s.strip.split("=") }
 
     raise GenomeTilerFastaMultipleAssignmentsError,

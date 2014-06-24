@@ -121,21 +121,21 @@ describe GenomeTiler do
         context "given a fasta definition line that contains an ID element" do
           it "generates a definiton string with the ID and start/end position" do
             instance = GenomeTiler.new
-            expect(instance.generate_definition(">YHet type=chromosome_arm; loc=YHet:1..347038; ID=YHet;", 5, 20)).to eq ">yhet_6_25"
+            expect(instance.generate_definition(
+              {"type"=>"chromosome_arm", "loc"=>"YHet:1..347038", "ID"=>"YHet"},
+              5,
+              20
+            )).to eq ">yhet_6_25"
           end
         end
-
 
         describe "#definition_to_fields" do
           context "given a fasta definition line we split it by ';' and map it into a Hash" do
             it "??" do
               instance = GenomeTiler.new
-              titles = [">YHet type", "loc", "ID", "dbxref", "MD5", "length", "release", "species"]
+              titles = ["type", "loc", "ID", "dbxref", "MD5", "length", "release", "species"]
               fields = instance.definition_to_fields(">YHet type=chromosome_arm; loc=YHet:1..347038; ID=YHet; dbxref=REFSEQ:NW_001848860,GB:CM000461; MD5=478fbc07ea1b1c03b3d8d04abacf51a5; length=347038; release=r5.51; species=Dmel;")
-              fields.keys.each do |key|
-                expect(titles.include?(key)).to be_true
-                titles.delete(key)
-              end
+              expect(titles.sort).to eq fields.keys.sort
             end
 
             context "given a fasta definition line that misses the ID element" do
