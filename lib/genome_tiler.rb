@@ -46,13 +46,23 @@ class GenomeTiler
         definition_fields = definition_to_fields(entry.definition)
 
         sequence = entry.seq
-        start_pos = options.fetch(:shifted) { 0 }
+        start_pos = options.fetch(:shifted, 0)
+        chromosome_filter = options.fetch(:filter_chr, ["*"])
+
+        next if element_filtered?(chromosome_filter, definition_fields["ID"].downcase)
 
         (start_pos..sequence.length-window_size).each do |i|
           yield generate_definition(definition_fields, i, window_size), sequence[i..(i+window_size-1)]
         end
       end
     end
+  end
+
+  def element_filtered?(chromosome_filter, definition_name)
+    return false if chromosome_filter.first == "*"
+    return false if chromosome_filter.map(&:downcase).include?(definition_name.downcase)
+
+    true
   end
 
   def generate_definition(fields, position, window_size)

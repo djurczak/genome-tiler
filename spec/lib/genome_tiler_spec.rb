@@ -54,20 +54,108 @@ describe GenomeTiler do
     end
 
     describe "#each_window_in_data" do
+
       it "yields control for each possible split for a sequence" do
         instance = GenomeTiler.new
-        expect { |b| instance.each_window_in_data(data, 20, &b) }.to yield_control.exactly(31).times
+        expect {
+          |b| instance.each_window_in_data(data, 20, &b)
+        }.to yield_control.exactly(31).times
       end
 
       it "yields a position-specific subsequence" do
         i = 0
-        seqs = ["AGGGTCACGTAATGCTGATC", "GGGTCACGTAATGCTGATCC", "GGTCACGTAATGCTGATCCA", "GTCACGTAATGCTGATCCAG", "TCACGTAATGCTGATCCAGT"]
+        seqs = [
+          "AGGGTCACGTAATGCTGATC",
+          "GGGTCACGTAATGCTGATCC",
+          "GGTCACGTAATGCTGATCCA",
+          "GTCACGTAATGCTGATCCAG",
+          "TCACGTAATGCTGATCCAGT"
+        ]
 
         instance = GenomeTiler.new
         instance.each_window_in_data(data, 20) do |definition, seq|
           expect(seq).to eq seqs[i]
           i+=1
           break if i == 4
+        end
+      end
+
+      let(:multiple_data) {
+        File.join(
+          File.dirname(__FILE__), '..', 'fixtures', 'two_sequence_fragments.fasta'
+        )
+      }
+
+      context "given the wildcard chromosome filter" do
+
+        it "yields all chromosomes and position-specific subsequence" do
+          i = 0
+          seqs = [
+            "AGGGTCACGTAATGCTGATC",
+            "GGGTCACGTAATGCTGATCC",
+            "GGTCACGTAATGCTGATCCA",
+            "GTCACGTAATGCTGATCCAG",
+            "TCACGTAATGCTGATCCAGT",
+            "CGGGTCACGTAATGCTGATC",
+            "GGGTCACGTAATGCTGATCC",
+            "GGTCACGTAATGCTGATCCT",
+            "GTCACGTAATGCTGATCCTG",
+            "TCACGTAATGCTGATCCTGT"
+          ]
+
+          instance = GenomeTiler.new
+          results = []
+          instance.each_window_in_data(multiple_data, 20, {:filter_chr => ["YHet", "XHet"]}) do |definition, seq|
+            results << seq
+          end
+
+          expect(results.sort).to eq seqs.sort
+        end
+      end
+
+      context "given the wildcard chromosome filter" do
+        it "yields all chromosomes and position-specific subsequence" do
+          i = 0
+          seqs = [
+            "AGGGTCACGTAATGCTGATC",
+            "GGGTCACGTAATGCTGATCC",
+            "GGTCACGTAATGCTGATCCA",
+            "GTCACGTAATGCTGATCCAG",
+            "TCACGTAATGCTGATCCAGT",
+            "CGGGTCACGTAATGCTGATC",
+            "GGGTCACGTAATGCTGATCC",
+            "GGTCACGTAATGCTGATCCT",
+            "GTCACGTAATGCTGATCCTG",
+            "TCACGTAATGCTGATCCTGT"
+          ]
+
+          instance = GenomeTiler.new
+          results = []
+          instance.each_window_in_data(multiple_data, 20, {:filter_chr => ["*"]}) do |definition, seq|
+            results << seq
+          end
+
+          expect(results.sort).to eq seqs.sort
+        end
+      end
+
+      context "given a specific chromosome filter" do
+        it "yields a chromosome and position-specific subsequence" do
+          i = 0
+          seqs = [
+            "CGGGTCACGTAATGCTGATC",
+            "GGGTCACGTAATGCTGATCC",
+            "GGTCACGTAATGCTGATCCT",
+            "GTCACGTAATGCTGATCCTG",
+            "TCACGTAATGCTGATCCTGT"
+          ]
+
+          instance = GenomeTiler.new
+          results = []
+          instance.each_window_in_data(multiple_data, 20, {:filter_chr => ["YHet"]}) do |definition, seq|
+            results << seq
+          end
+          expect(results.sort).to eq seqs.sort
         end
       end
 
