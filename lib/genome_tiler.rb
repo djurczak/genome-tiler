@@ -2,6 +2,10 @@ require 'command'
 require 'stringio'
 require 'bio'
 
+class GenomeTilerError < StandardError; end;
+class GenomeTilerFastaMissingIDError < GenomeTilerError; end;
+class GenomeTilerFastaMultipleAssignmentsError < GenomeTilerError; end;
+
 class GenomeTiler
   def split_into_windows(data, output, window_size, options)
     items = 0
@@ -39,25 +43,51 @@ class GenomeTiler
   def each_window_in_data(data, window_size, options = {})
     Bio::FlatFile.auto(data) do |ff|
       ff.each do |entry|
-        definition = entry.definition
+        definition_fields = definition_to_fields(entry.definition)
+
         sequence = entry.seq
-        start_pos = options.fetch(:shifted) { 0 }
+        start_pos = options.fetch(:shifted, 0)
+        chromosome_filter = options.fetch(:filter_chr, ["*"])
+
+        next if element_filtered?(chromosome_filter, definition_fields["ID"].downcase)
 
         (start_pos..sequence.length-window_size).each do |i|
-          yield generate_definition(definition, i, window_size), sequence[i..(i+window_size-1)]
+          yield generate_definition(definition_fields, i, window_size), sequence[i..(i+window_size-1)]
         end
       end
     end
   end
 
-  def generate_definition(definition, position, window_size)
-    fields = definition_to_fields(definition)
-    raise "Definition line #{definition} misses ID element [#{window_size}]" unless fields.has_key?("ID")
+  def element_filtered?(chromosome_filter, definition_name)
+    return false if chromosome_filter.first == "*"
+    return false if chromosome_filter.map(&:downcase).include?(definition_name.downcase)
+
+    true
+  end
+
+  def generate_definition(fields, position, window_size)
     ">#{fields["ID"].downcase}_#{position + 1}_#{position+window_size}"
   end
 
   def definition_to_fields(definition)
-    definition.split(";").map { |s| s.strip.split("=") }.reduce({}) { |o, n| o.merge!(n[0] => n[1]) }
+
+    ## first lets get rid of the '>chrom_name' prefix, it should be available
+    ## inside the ID column anyway
+    definition_string = definition.gsub(/>\w+/, "").strip
+
+    columns = definition_string.split(";")
+    fields = columns.map { |s| s.strip.split("=") }
+
+    raise GenomeTilerFastaMultipleAssignmentsError,
+      "Definition line '#{definition}' has multiple assignments in a " \
+      "single column." unless fields.select { |f| f.count != 2 }.empty?
+
+    fields = fields.reduce({}) { |o, n| o.merge!(n[0] => n[1]) }
+
+    raise GenomeTilerFastaMissingIDError,
+      "Definition line '#{definition}' misses the ID element." unless fields.has_key?("ID")
+
+    fields
   end
 
   def write_element_to_stream(output, definition, sequence)
